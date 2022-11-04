@@ -104,11 +104,12 @@ minimalSamplePostProduct = {
     'data': {
         'type': 'products', 
         'attributes': {
-            'variation_values': ['4 feet'], 
+            'variation_values': ['5 feet'], 
             'product_group_id': '85f4ffe2-e1a9-4314-b808-c7d178c78e27'
         }
     }
 }
+
 
 def get_settings():
     full_file_path = Path(__file__).parent.joinpath('settings.yaml')
@@ -188,10 +189,10 @@ def create_items(itemType,items):
     for i in items:
         data = i
         print(data)
-        response = requests.request("POST", url, headers=headers, data=data)
+        response = requests.request("POST", url, headers=headers, json=data)
         print(response)
         print(response.content)
-create_items("products",[minimalSamplePostProduct])
+create_items("products",[minimalSamplePostProduct1])
 
 
 

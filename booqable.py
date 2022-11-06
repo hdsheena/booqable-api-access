@@ -127,14 +127,6 @@ def get_items(itemType):
     url = "https://"+urlbase+".booqable.com/api/boomerang/"+itemType
     pagesize = "?page[size]=100"
 
-   
-
-    data = {
-      "filters": [
-      ]
-    }
-
-
     # print("doing request next")
     # print(url+payload, headers)
     after = ""
@@ -145,6 +137,21 @@ def get_items(itemType):
     data = response.json()["data"]
     return data, url
 
+def get_product_group_by_name(name):
+    url = "https://"+urlbase+".booqable.com/api/boomerang/product_groups"
+    postData = {
+      "fields": {
+        "product_groups": "id"
+      },
+      "filter": {
+        "name": {
+          "eq": name
+              }
+            }
+            }
+    response = requests.request("POST",url, headers=headers,json=postData)
+    print(response.json())
+get_product_group_by_name('Marquee Tent Top')
 def delete_items(itemType,data):
     for i in data:
         #print(i['id'])
@@ -193,13 +200,75 @@ def create_items(itemType,items):
             print(response.json()["data"]["id"])
         except:
             print(response.content)
+        return response
 
 
-marqueeTentTopSampleItem = {'group': 'Marquee Tent Top',
+def create_group(name, trackable, has_variations, variation_fields=[]):
+    if trackable:
+        tracking_type = 'trackable'
+    else:
+        tracking_type = 'bulk'
+    group_json = {'data': {
+            'type': 'product_groups', 
+            'attributes': {
+            'name':name,
+            'tracking_type':tracking_type,
+            'trackable':trackable,
+            'has_variations':has_variations,
+            'variation_fields': variation_fields, 
+            }
+        }
+        }
+    create_items("product_groups",group_json)
+    if response.status_code == 201:
+        product_group_id = response.json()["data"]["id"]
+    else:
+        product_group_id = get_product_group_by_name(name)
+    return product_group_id
+
+
+def create_product(identifier, price,product_group_id, variation_values=[]):
+    if len(variation_values)>0:
+        product_json = {'data': {
+            'type': 'products', 
+            'attributes': {
+            'has_variations':False,
+            'base_price_in_cents': price, 
+            'deposit_in_cents': 0,
+            'variation_values': variation_values, 
+            'product_group_id': product_group_id
+            }
+        }
+        }
+
+sampleGroupData = {
+    'Marquee Tent Top': {'variation_fields':['size','type'],
+    'trackable':True,'has_variations':True},
+'Pop Up Tent Top': {'trackable':True,'has_variations':False}
+                }
+sampleDataFormat = {'Marquee Tent Top': [{
 'variation_values': ['20x20', ''],
 'identifier':'Domtar',
 'price':5000
+},{'variation_values': ['20x20', ''],
+'identifier':'Remax',
+'price':5000}], 'Pop Up Tent Top': [{'identifier':'46','price':5000},{'identifier':'17','price':5000}]
 }
+
+
+# for i in sampleDataFormat:
+#     groupData = sampleGroupData[i]
+#     try:
+#         if groupData['has_variations']:
+#             create_group(i,groupData['trackable'],groupData['has_variations'],groupData['variation_fields'])
+#         else:
+#             create_group(i,groupData['trackable'],groupData['has_variations'])
+
+#     except:
+#         print("group may already exist")
+#     if groupData['trackable']:
+#         create_items('products'[])
+
 marqueeTentTopGroup = {'data': {
             'type': 'product_groups', 
             'attributes': {
@@ -230,20 +299,20 @@ marqueeTentTop35x40 = {'data': {
             'deposit_in_cents': 0,
             'variation_values': ['35x40', 'Hex'], 
             #'confim_shortage': False,
-            #'product_group_id': '360be4b7-1adf-4c9a-af5c-ae55b1c60a12'
+            'product_group_id': '360be4b7-1adf-4c9a-af5c-ae55b1c60a12'
             }
         }
         }
-create_items("products",[marqueeTentTop35x40])
+#create_items("products",[marqueeTentTop35x40])
 
 marqueeTentTop35x40StockItem = {
       "data": {
         "type": "stock_items",
         "attributes": {
           "identifier": "Domtar",
-         # "product_id": "c6aa8278-46cc-4150-8a1b-4f771d004d52"
+          "product_id": "c6aa8278-46cc-4150-8a1b-4f771d004d52"
         }
       }
     }
 
-create_items("stock_items",[marqueeTentTop35x40StockItem])
+#create_items("stock_items",[marqueeTentTop35x40StockItem])

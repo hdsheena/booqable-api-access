@@ -85,8 +85,8 @@ samplePostProduct = {'data': {
             'sorting_weight': 1, 
             'base_price_in_cents': 5000, 
             'deposit_in_cents': 0,
-            'variation_values': ['2 feet', '2"', 'blue'], 
-            'confim_shortage': False,
+            'variation_values': ['2 feet', '3"', 'blue'], 
+            #'confim_shortage': False,
             'product_group_id': '0bdedbf4-5a35-45d7-9086-2c9311323d4d'
             }
         }
@@ -109,8 +109,6 @@ minimalSamplePostProduct = {
         }
     }
 }
-
-
 def get_settings():
     full_file_path = Path(__file__).parent.joinpath('settings.yaml')
     with open(full_file_path) as settings:
@@ -188,11 +186,64 @@ def create_items(itemType,items):
     url = "https://"+urlbase+".booqable.com/api/boomerang/"+itemType
     for i in items:
         data = i
-        print(data)
+        #print(data)
         response = requests.request("POST", url, headers=headers, json=data)
         print(response)
-        print(response.content)
-create_items("products",[minimalSamplePostProduct1])
+        try:
+            print(response.json()["data"]["id"])
+        except:
+            print(response.content)
 
 
+marqueeTentTopSampleItem = {'group': 'Marquee Tent Top',
+'variation_values': ['20x20', ''],
+'identifier':'Domtar',
+'price':5000
+}
+marqueeTentTopGroup = {'data': {
+            'type': 'product_groups', 
+            'attributes': {
+            'name':'Marquee Tent Tops',
+            'tracking_type':'trackable',
+            'trackable':True,
+            'has_variations':True,
+            'remote_photo_url': '',
+            'sorting_weight': 1, 
+            #'base_price_in_cents': 5000, 
+            #'deposit_in_cents': 0,
+            'has_variations': True,
+            'variation_fields': ['size', 'type'], 
+            'tag_list': []
+            #'confim_shortage': False,
+            }
+        }
+        }
+#create_items("product_groups",[marqueeTentTopGroup])
 
+marqueeTentTop35x40 = {'data': {
+            'type': 'products', 
+            'attributes': {
+            'has_variations':False,
+            'remote_photo_url': '',
+            'sorting_weight': 1, 
+            'base_price_in_cents': 5000, 
+            'deposit_in_cents': 0,
+            'variation_values': ['35x40', 'Hex'], 
+            #'confim_shortage': False,
+            #'product_group_id': '360be4b7-1adf-4c9a-af5c-ae55b1c60a12'
+            }
+        }
+        }
+create_items("products",[marqueeTentTop35x40])
+
+marqueeTentTop35x40StockItem = {
+      "data": {
+        "type": "stock_items",
+        "attributes": {
+          "identifier": "Domtar",
+         # "product_id": "c6aa8278-46cc-4150-8a1b-4f771d004d52"
+        }
+      }
+    }
+
+create_items("stock_items",[marqueeTentTop35x40StockItem])

@@ -141,15 +141,58 @@ def get_items(itemType):
 def get_product_group_by_name(name):
     url = 'https://' + urlbase \
         + '.booqable.com/api/boomerang/product_groups/search'
-    postData = {'fields': {'product_groups': 'id'},
-                'filter': {'name': {'eq': name}}}
-
+    postData = {'fields': {'product_groups': ['id','name']},
+                'filter': 'name eql '+name
+            }
+                
+    postData2 = {
+      "fields": {
+        "product_groups": ['id','name']
+      },
+      "filter": {
+        "conditions": {
+          "operator": "or",
+          "attributes": [
+            {
+              "operator": "and",
+              "attributes": [
+                {
+                  "discountable": True
+                },
+                {
+                  "taxable": True
+                }
+              ]
+            },
+            {
+              "operator": "and",
+              "attributes": [
+                {
+                  "show_in_store": True
+                },
+                {
+                  "taxable": True
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }           
+    #print(url, postData)
     response = requests.request('POST', url, headers=headers,
-                                json=postData)
-    print(response.json())
+                                json=postData2)
+    results = response.json()['data']
+    for i in results:
+        print(i['id'], i['attributes']['name'])
+    if len(results)==1:
+        return response.json()['data'][0]['id']
+    else:
+        print("Multiple matches found!")
+        return "" 
 
 
-get_product_group_by_name('Marquee Tent Top')
+get_product_group_by_name('Marquee Tent Tops')
 
 
 def delete_items(itemType, data):

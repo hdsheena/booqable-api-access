@@ -7,6 +7,7 @@ import datetime
 import csv
 import yaml
 from pathlib import Path
+import urllib.parse
 
 sampleResultProductGroup = {
     'created_at': '2022-11-03T20:29:36+00:00',
@@ -145,46 +146,15 @@ def get_product_group_by_name(name):
                 'filter': 'name eql '+name
             }
                 
-    postData2 = {
-      "fields": {
-        "product_groups": ['id','name']
-      },
-      "filter": {
-        "conditions": {
-          "operator": "or",
-          "attributes": [
-            {
-              "operator": "and",
-              "attributes": [
-                {
-                  "discountable": True
-                },
-                {
-                  "taxable": True
-                }
-              ]
-            },
-            {
-              "operator": "and",
-              "attributes": [
-                {
-                  "show_in_store": True
-                },
-                {
-                  "taxable": True
-                }
-              ]
-            }
-          ]
-        }
-      }
-    }           
-    #print(url, postData)
-    response = requests.request('POST', url, headers=headers,
-                                json=postData2)
+    queryString = '?filter[q]=' +urllib.parse.quote(name)
+    #Why does "filter[q] work? no idea.. nov 2022"
+    #print(url+queryString)
+    response = requests.request('POST', url+queryString, headers=headers,
+                                json=postData)
+    #print(response.content)
     results = response.json()['data']
-    for i in results:
-        print(i['id'], i['attributes']['name'])
+    # for i in results:
+    #     print(i['id'], i['attributes']['name'])
     if len(results)==1:
         return response.json()['data'][0]['id']
     else:
@@ -192,7 +162,6 @@ def get_product_group_by_name(name):
         return "" 
 
 
-get_product_group_by_name('Marquee Tent Tops')
 
 
 def delete_items(itemType, data):
@@ -246,12 +215,7 @@ def create_items(itemType, items):
         return response
 
 
-def create_group(
-    name,
-    trackable,
-    has_variations,
-    variation_fields=[],
-    ):
+def create_group(name,trackable,has_variations,variation_fields=[]):
     if trackable:
         tracking_type = 'trackable'
     else:
@@ -264,20 +228,15 @@ def create_group(
         'variation_fields': variation_fields,
         }}}
 
-    create_items('product_groups', group_json)
+    response = create_items('product_groups', group_json)
     if response.status_code == 201:
         product_group_id = response.json()['data']['id']
     else:
         product_group_id = get_product_group_by_name(name)
     return product_group_id
 
-
-def create_product(
-    identifier,
-    price,
-    product_group_id,
-    variation_values=[],
-    ):
+### This below all assumes the product doesn't already exist, but it very well could already exist.. todo
+def create_trackable_product(identifier, price, product_group_id,variation_values=[]): 
     if len(variation_values) > 0:
         product_json = {'data': {'type': 'products', 'attributes': {
             'has_variations': False,
@@ -286,7 +245,19 @@ def create_product(
             'variation_values': variation_values,
             'product_group_id': product_group_id,
             }}}
-
+    response = create_items('products',product_json)
+    return response.json()
+def create_bulk_product(quantity, price, product_group_id,variation_values=[]): 
+    if len(variation_values) > 0:
+        product_json = {'data': {'type': 'products', 'attributes': {
+            'has_variations': False,
+            'base_price_in_cents': price,
+            'deposit_in_cents': 0,
+            'variation_values': variation_values,
+            'product_group_id': product_group_id,
+            }}}
+    response = create_items('products',product_json)
+    return response.json()
 
 sampleGroupData = {'Marquee Tent Top': {'variation_fields': ['size',
                    'type'], 'trackable': True, 'has_variations': True},
@@ -300,48 +271,30 @@ sampleDataFormat = {'Marquee Tent Top': [{'variation_values': ['20x20',
                     'price': 5000}, {'identifier': '17',
                     'price': 5000}]}
 
-# for i in sampleDataFormat:
-#     groupData = sampleGroupData[i]
-#     try:
-#         if groupData['has_variations']:
-#             create_group(i,groupData['trackable'],groupData['has_variations'],groupData['variation_fields'])
-#         else:
-#             create_group(i,groupData['trackable'],groupData['has_variations'])
+for groupKey in sampleDataFormat:
+    groupData = sampleGroupData[groupKey]
+   
+    if groupData['has_variations']:
+        groupId = create_group(i,groupData['trackable'],groupData['has_variations'],groupData['variation_fields'])
+    else:
+        groupId = create_group(i,groupData['trackable'],groupData['has_variations'])
 
-#     except:
-#         print("group may already exist")
-#     if groupData['trackable']:
-#         create_items('products'[])
+    
+    if groupData['trackable']:
+        for product in sampleDataFormat[groupKey]:
+            try:
+                variation_values = product['variation_values']
+            except:
+                variation_values = []
 
-marqueeTentTopGroup = {'data': {'type': 'product_groups',
-                       'attributes': {
-    'name': 'Marquee Tent Tops',
-    'tracking_type': 'trackable',
-    'trackable': True,
-    'has_variations': True,
-    'remote_photo_url': '',
-    'sorting_weight': 1,
-    'has_variations': True,
-    'variation_fields': ['size', 'type'],
-    'tag_list': [],
-    }}}
+            create_trackable_product(product['identifier'],product['price'],groupId,variation_values)
 
-# create_items("product_groups",[marqueeTentTopGroup])
+    else:
+        for product in sampleDataFormat[groupKey]:
+            try:
+                variation_values = product['variation_values']
+            except:
+                variation_values = []
 
-marqueeTentTop35x40 = {'data': {'type': 'products', 'attributes': {
-    'has_variations': False,
-    'remote_photo_url': '',
-    'sorting_weight': 1,
-    'base_price_in_cents': 5000,
-    'deposit_in_cents': 0,
-    'variation_values': ['35x40', 'Hex'],
-    'product_group_id': '360be4b7-1adf-4c9a-af5c-ae55b1c60a12',
-    }}}
+            create_bulk_product(quantity,product['price'],groupId,variation_values)
 
-# create_items("products",[marqueeTentTop35x40])
-
-marqueeTentTop35x40StockItem = {'data': {'type': 'stock_items',
-                                'attributes': {'identifier': 'Domtar',
-                                'product_id': 'c6aa8278-46cc-4150-8a1b-4f771d004d52'}}}
-
-# create_items("stock_items",[marqueeTentTop35x40StockItem])

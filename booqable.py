@@ -140,13 +140,13 @@ def get_items(itemType):
 
 def get_product_group_by_name(name):
     url = 'https://' + urlbase \
-        + '.booqable.com/api/boomerang/product_groups'
+        + '.booqable.com/api/boomerang/product_groups/search'
     postData = {'fields': {'product_groups': 'id'},
                 'filter': {'name': {'eq': name}}}
 
     response = requests.request('POST', url, headers=headers,
                                 json=postData)
-    print response.json()
+    print(response.json())
 
 
 get_product_group_by_name('Marquee Tent Top')
@@ -159,7 +159,7 @@ def delete_items(itemType, data):
         deleteurl = url + '/' + i['id']
         response1 = requests.request('DELETE', deleteurl,
                 headers=headers)
-        print response1.content
+        print(response1.content)
 
 
 def get_products_from_all_groups():
@@ -170,22 +170,21 @@ def get_products_from_all_groups():
 
         # print(i)
 
-        print '-----'
-        print (i['attributes']['type'], ':', i['attributes']['name'])
-        print '****'
+        print('-----')
+        print((i['attributes']['type'], ':', i['attributes']['name']))
+        print('****')
         queryString = '?filter[product_group_id][eq]=' + i['id']
         productsInGroup = requests.request('GET', 'https://' + urlbase
                 + '.booqable.com/api/boomerang/' + 'products'
                 + queryString, headers=headers)
         for i in productsInGroup.json()['data']:
-            print (i['attributes']['type'], ':', i['attributes']['name'
-                   ])
+            print(i['attributes']['type'], ':', i['attributes']['name'])
 
 
 def deleteAllLocations():
     data = get_items('locations')
     for i in data:
-        print i
+        print(i)
     delete_items('locations', data)
 
 
@@ -196,11 +195,11 @@ def create_items(itemType, items):
         data = i
         response = requests.request('POST', url, headers=headers,
                                     json=data)
-        print response
+        print(response)
         try:
-            print response.json()['data']['id']
+            print(response.json()['data']['id'])
         except:
-            print response.content
+            print(response.content)
         return response
 
 

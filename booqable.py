@@ -202,18 +202,17 @@ def get_products_from_all_groups():
 
 def deleteAllLocations():
     data = get_items('locations')
-    for i in data:
-        print(i)
+    for item in data:
+        print(item)
     delete_items('locations', data)
 
 
 def create_items(itemType, items):
-    url = 'https://' + urlbase + '.booqable.com/api/boomerang/' \
-        + itemType
-    for i in items:
-        data = i
-        response = requests.request('POST', url, headers=headers,
-                                    json=data)
+    url = 'https://{urlbase}.booqable.com/api/boomerang/{item_type}'.format(
+        urlbase=urlbase, item_type=itemType)
+    for item in items:
+        data = item
+        response = requests.request('POST', url, headers=headers, json=data)
         print(response)
         try:
             print(response.json()['data']['id'])
@@ -244,7 +243,9 @@ def create_group(name,trackable,has_variations,variation_fields=[]):
 
 ### This below all assumes the product doesn't already exist, but it very well could already exist.. todo
 def create_trackable_product(identifier, price, product_group_id,variation_values=[]): 
+    #check to see if this is a product with variations
     if len(variation_values) > 0:
+        #create the product with variations
         product_json = {'data': {'type': 'products', 'attributes': {
             'has_variations': False,
             'base_price_in_cents': price,
@@ -286,7 +287,6 @@ for groupKey in sampleDataFormat:
     else:
         groupId = create_group(i,groupData['trackable'],groupData['has_variations'])
 
-    
     if groupData['trackable']:
         for product in sampleDataFormat[groupKey]:
             try:

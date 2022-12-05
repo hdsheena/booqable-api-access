@@ -6,6 +6,7 @@ import dateutil.parser
 import datetime
 import csv
 import yaml
+import os
 from pathlib import Path
 import urllib.parse
 
@@ -101,9 +102,15 @@ minimalSamplePostProduct = {'data': {'type': 'products',
 
 
 def get_settings():
-    full_file_path = Path(__file__).parent.joinpath('settings.yaml')
-    with open(full_file_path) as settings:
-        settings_data = yaml.load(settings, Loader=yaml.Loader)
+    settings_data = {}
+    if "CODESPACES" in os.environ:
+        # Get the secrets from the `secrets` object provided by Codespaces
+        settings_data["token"] = os.environ["TOKEN"]
+        settings_data["urlbase"] = os.environ["URLBASE"]
+    else:
+        full_file_path = Path(__file__).parent.joinpath('settings.yaml')
+        with open(full_file_path) as settings:
+            settings_data = yaml.load(settings, Loader=yaml.Loader)
     return settings_data
 
 

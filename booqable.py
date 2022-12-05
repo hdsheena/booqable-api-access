@@ -280,7 +280,7 @@ sampleDataFormat = {'Marquee Tent Top': [{'variation_values': ['20x20',
 
 for groupKey in sampleDataFormat:
     groupData = sampleGroupData[groupKey]
-   
+    i = groupKey
     if groupData['has_variations']:
         groupId = create_group(i,groupData['trackable'],groupData['has_variations'],groupData['variation_fields'])
     else:
@@ -302,6 +302,6 @@ for groupKey in sampleDataFormat:
                 variation_values = product['variation_values']
             except:
                 variation_values = []
-
+            quantity = 1
             create_bulk_product(quantity,product['price'],groupId,variation_values)
 
